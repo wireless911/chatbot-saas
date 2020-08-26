@@ -47,15 +47,15 @@ class ModelTrainViews(HTTPMethodView):
                 info = dict(
                     domain=path_context.domain_path,
                     config=path_context.config_file_path,
-                    training_files=path_context.chatbot_train_root_path,
-                    output=path_context.chatbot_model_root_path,
+                    training_files=path_context.root_path,
+                    output=path_context.chatbot_model_path,
                     force_training=rjs.get("force", False),
                 )
 
                 loop = asyncio.get_event_loop()
 
                 from rasa import train as train_model
-                await response.write({"msg": "ok1"})
+                await response.write({"code": 200, "msg": "train task push in queue"})
 
                 # Declare `model_path` upfront to avoid pytype `name-error`
                 model_path: Optional[Text] = None
@@ -66,26 +66,31 @@ class ModelTrainViews(HTTPMethodView):
                 # reload agent
                 bot = app.bots[path_context.bot_id]  # type:BotManager
                 app.bots[path_context.bot_id] = await bot.load_agent(model_path=model_path)
-            except InvalidDomain as e:
-                raise ErrorResponse(
-                    400,
-                    "InvalidDomainError",
-                    f"Provided domain file is invalid. Error: {e}",
-                )
             except Exception as e:
                 _logger.debug(traceback.format_exc())
-                raise ErrorResponse(
-                    500,
-                    "TrainingError",
-                    f"An unexpected error occurred during training. Error: {e}",
-                )
+                await response.write({"code": 500, "msg": "train error"})
             finally:
                 with app.active_training_processes.get_lock():
                     app.active_training_processes.value -= 1
 
-                await response.write({"msg": "ok2"})
+                await response.write({"code": 200, "msg": "ok2"})
 
         return stream(streaming_fn, content_type="application/json")
+
+
+class ModelPublishViews(HTTPMethodView):
+    """模型训练视图"""
+
+    async def post(self, request: Request):
+        app = request.app
+
+        rjs = request.json
+        path_context = PathContext(rjs)
+
+        bot = app.bots[path_context.bot_id]  # type:BotManager
+        app.bots[path_context.bot_id] = await bot.load_agent(model_path=path_context.chatbot_model_path)
+
+        return json({"code": 200, "data": "ok"})
 
 
 class ModelParseViews(HTTPMethodView):

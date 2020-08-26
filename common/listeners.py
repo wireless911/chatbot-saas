@@ -28,10 +28,4 @@ async def before_server_start(app: Sanic, loop):
     for bot in bots:
         from utils.context import PathContext
         path_context = PathContext({"bot_id": bot.bot_id, "version": bot.version})
-
         app.bots[bot.bot_id] = await BotManager(path_context).load_agent()
-
-    # from utils.context import PathContext
-    # path_context = PathContext({"bot_id": "rasa-demo", "version": "0.1"})
-    # agent = await load_agent(model_path=path_context.chatbot_model_root_path)  # type:Agent
-    # app.agent = agent

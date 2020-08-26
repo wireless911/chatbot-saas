@@ -19,6 +19,7 @@ from asyncio import CancelledError
 from typing import Any, Callable, Dict, List, Optional, Text, Tuple, Union
 
 import aiohttp
+from rasa.core.brokers.file import FileEventBroker
 from sanic import Sanic
 
 import rasa
@@ -63,6 +64,67 @@ from rasa.core.agent import Agent
 
 
 class LSTMAgent(Agent):
-    pass
+
+    def __init__(self, *args, **kwargs):
+        super(LSTMAgent, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def load(
+            cls,
+            model_path: Text,
+            interpreter: Optional[NaturalLanguageInterpreter] = None,
+            generator: Union[EndpointConfig, NaturalLanguageGenerator] = None,
+            tracker_store: Optional[TrackerStore] = None,
+            lock_store: Optional[LockStore] = None,
+            action_endpoint: Optional[EndpointConfig] = None,
+            model_server: Optional[EndpointConfig] = None,
+            remote_storage: Optional[Text] = None,
+            path_to_model_archive: Optional[Text] = None,
+    ) -> "Agent":
+        """Load a persisted model from the passed path."""
+        try:
+            if not model_path:
+                raise ModelNotFound("No path specified.")
+            elif not os.path.exists(model_path):
+                raise ModelNotFound(f"No file or directory at '{model_path}'.")
+            elif os.path.isfile(model_path):
+                model_path = get_model(model_path)
+        except ModelNotFound:
+            raise ValueError(
+                "You are trying to load a MODEL from '{}', which is not possible. \n"
+                "The model path should be a 'tar.gz' file or a directory "
+                "containing the various model files in the sub-directories 'core' "
+                "and 'nlu'. \n\nIf you want to load training data instead of "
+                "a model, use `agent.load_data(...)` instead.".format(model_path)
+            )
+
+        core_model, nlu_model = get_model_subdirectories(model_path)
+
+        if not interpreter and nlu_model:
+            interpreter = NaturalLanguageInterpreter.create(nlu_model)
+
+        domain = None
+        ensemble = None
+
+        if core_model:
+            domain = Domain.load(os.path.join(core_model, DEFAULT_DOMAIN_PATH))
+            ensemble = PolicyEnsemble.load(core_model) if core_model else None
+
+            # ensures the domain hasn't changed between test and train
+            domain.compare_with_specification(core_model)
 
 
+
+        return cls(
+            domain=domain,
+            policies=ensemble,
+            interpreter=interpreter,
+            generator=generator,
+            tracker_store=_tracker_store,
+            lock_store=lock_store,
+            action_endpoint=action_endpoint,
+            model_directory=model_path,
+            model_server=model_server,
+            remote_storage=remote_storage,
+            path_to_model_archive=path_to_model_archive,
+        )

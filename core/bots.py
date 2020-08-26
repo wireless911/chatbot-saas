@@ -9,17 +9,19 @@
 @Desc   ：
 ==================================================
 """
+import os
 from typing import Optional, Text
 
-from rasa.core.agent import load_agent, Agent, _load_interpreter, _load_domain_and_policy_ensemble
+from rasa.core.agent import load_agent, Agent
 from rasa.core.brokers.broker import EventBroker
+from rasa.core.brokers.file import FileEventBroker
 from rasa.core.channels import UserMessage
 from rasa.core.lock_store import LockStore
 from rasa.core.tracker_store import TrackerStore
 from rasa.core.utils import AvailableEndpoints
 from rasa.model import get_model_subdirectories
 
-from models import dbManger
+# from models import dbManger
 from models.model import RobotsModel
 from sanic.log import logger as _logger
 
@@ -39,13 +41,22 @@ class BotManager(object):
         credentials: Path to channel credentials file.
         '''
         self.path_context = path_context
-        endpoints = self.path_context.endpoints_file_path
-        credentials = self.path_context.credentials_file_path
+        endpoints_path = self.path_context.endpoints_file_path
+        credentials_path = self.path_context.credentials_file_path
 
         self.agent = agent if agent else None
 
-        # load endpoints
-        self._load_endpoints(endpoints=endpoints)
+        # broker tracker
+        # read file if have endpoints file otherwise use default setting
+        if os.path.exists(endpoints_path):
+            # load endpoints
+            self._load_endpoints(endpoints=endpoints_path)
+        else:
+            # create event broker
+            event_broker = FileEventBroker()  # TODO 修改这里的broker，file格式的不太适合生产
+            # create tracker store
+            from config.settings import REDIS_SETTING
+            self.tracker_store = TrackerStore(**REDIS_SETTING, event_broker=event_broker)
 
     async def load_agent(self, model_path: Optional[Text] = None):
         """
@@ -53,16 +64,16 @@ class BotManager(object):
         :param model_path:
         :return:
         """
-        model_path = self.path_context.chatbot_model_root_path if not model_path else model_path
+        model_path = self.path_context.chatbot_model_path if not model_path else model_path
         self.agent = await load_agent(
             model_path=model_path,
-            # generator=self.generator,
-            # tracker_store=self.tracker_store,
-            # lock_store=self.lock_store,
+            generator=self.generator,
+            tracker_store=self.tracker_store,
+            lock_store=self.lock_store,
             action_endpoint=self.action_endpoint,
 
         )
-        _logger.info(f"reload robot {self.path_context.bot_id} version {self.path_context.version}")
+        _logger.info(f"reload robot {self.path_context.bot_id}")
         return self
 
     async def parse(self, text: Optional[Text] = ""):
@@ -70,7 +81,7 @@ class BotManager(object):
         response = await self.agent.parse_message_using_nlu_interpreter(text)
         return response
 
-    async def handle_text(self, text: Optional[Text] = "", sender_id: Optional[Text] = UserMessage.DEFAULT_SENDER_ID, ):
+    async def handle_text(self, text: Optional[Text] = "", sender_id: Optional[Text] = UserMessage.DEFAULT_SENDER_ID):
         """消息处理"""
         response = await self.agent.handle_text(text, sender_id=sender_id)
         return response

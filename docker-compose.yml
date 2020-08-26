@@ -1,0 +1,35 @@
+version: '3'
+services:
+  product:
+    container_name: product
+    image: ${CHATBOT_SAAS_IMAGE}
+    user: root
+    volumes:
+      - .:/code
+      - ${CHATBOT_HOST_PATH}:/chatbot
+    ports:
+      - "${PRODUCT_PORT}:8000"
+    command: python /code/main.py --port=8000 --workers=${PRODUCT_WORKERS}
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+
+  test:
+    container_name: test
+    image: ${CHATBOT_SAAS_IMAGE}
+    user: root
+    volumes:
+      - .:/code
+      - ${CHATBOT_HOST_PATH}:/chatbot
+    ports:
+      - "${TEST_PORT}:8000"
+    command: python /code/main.py --port=8000 --workers=${TEST_WORKERS}
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+
+
+networks:
+  default:
+    external:
+      name: services_default

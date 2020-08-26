@@ -10,11 +10,10 @@
 ==================================================
 """
 
-from peewee_async import Manager, PooledMySQLDatabase
-from config.settings import DATABASE_SETTING
-
-
-db = PooledMySQLDatabase(**DATABASE_SETTING)
-
-
-dbManger = Manager(db)
+# from peewee_async import Manager, PooledMySQLDatabase
+# from config.settings import DATABASE_SETTING
+#
+# db = PooledMySQLDatabase(**DATABASE_SETTING)
+#
+# print("dbmager db initalize")
+# dbManger = Manager(db)
