@@ -2,10 +2,13 @@
 # -*- coding: UTF-8 -*-
 """
 =================================================
-@Project -> File   ：chatbot-saas -> manger
+@Project -> File   ：chatbot-saas -> redis_util
 @IDE    ：PyCharm
 @Author ：Mr. Wireless
-@Date   ：2020/8/26 11:55
+@Date   ：2020/9/15 18:57
 @Desc   ：
 ==================================================
 """
+
+
+

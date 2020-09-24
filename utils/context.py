@@ -11,8 +11,7 @@
 """
 
 import os
-import sys
-from config.settings import (TRAIN_DATA_PATH, MODEL_PATH)
+from config.settings import TRAIN_DATA_PATH, MODEL_PATH
 
 
 class PathContext(object):
@@ -29,7 +28,7 @@ class PathContext(object):
         self.chatbot_model_path = os.path.join(self.root_path, MODEL_PATH)
 
         # train config
-        self.config_file_path = os.path.join(self.root_path, "config-test.yml")
+        self.config_file_path = os.path.join(self.root_path, "config.yml")
         self.credentials_file_path = os.path.join(self.root_path, "credentials.yml")
         self.endpoints_file_path = os.path.join(self.root_path, "endpoints.yml")
         self.connect_path = os.path.join(self.root_path, "channels.")

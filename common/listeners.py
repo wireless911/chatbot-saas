@@ -9,23 +9,36 @@
 @Desc   ：
 ==================================================
 """
+import time
+
+import aioredis
+from aioredis import Redis
 from rasa.core.agent import load_agent, Agent
 from sanic import Sanic
 from typing import Optional, List
 from sanic.log import logger as _logger
-
-from core.bots import BotManager
-from models import dbManger
-from models.model import RobotsModel
+from config.settings import SUB_ACTION, SUB_ACTION_REDIS_PASS, REDIS_URL
+from core.bots import BotsManager
+import asyncio
 
 
 async def before_server_start(app: Sanic, loop):
-    from config.settings import MODE
-    bots = await dbManger.execute(RobotsModel.select().where(RobotsModel.mode == MODE))
-    bot: Optional[RobotsModel] = None
+    app.botsManager = await BotsManager(app.mode).load_bots()
+    app.pub = await aioredis.create_redis(REDIS_URL, **SUB_ACTION_REDIS_PASS)
 
-    app.bots = {}
-    for bot in bots:
-        from utils.context import PathContext
-        path_context = PathContext({"bot_id": bot.bot_id, "version": bot.version})
-        app.bots[bot.bot_id] = await BotManager(path_context).load_agent()
+
+async def after_server_start(app: Sanic, loop):
+    # reload chatbot
+    async def reload_chatbot(ch):
+        while (await ch.wait_message()):
+            msg = await ch.get_json()
+            botsManager = app.botsManager  # type:BotsManager
+            await botsManager.publish(msg["bot_id"])
+
+    # 订阅redis channel
+    app.sub = await aioredis.create_redis(REDIS_URL, **SUB_ACTION_REDIS_PASS)
+    _logger.info(f"sub {SUB_ACTION} in redis")
+
+    res = await app.sub.subscribe(SUB_ACTION)
+    tsk = asyncio.ensure_future(reload_chatbot(res[0]))
+    await tsk

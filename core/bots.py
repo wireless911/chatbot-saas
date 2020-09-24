@@ -22,13 +22,60 @@ from rasa.core.utils import AvailableEndpoints
 from rasa.model import get_model_subdirectories
 
 # from models import dbManger
+from models import dbManger
 from models.model import RobotsModel
 from sanic.log import logger as _logger
 
 from utils.context import PathContext
 
 
-class BotManager(object):
+class BotsManager(object):
+    """chatbot管理类"""
+
+    def __init__(self, mode):
+        self.mode = mode
+        self.bots = {}
+
+    async def load_bots(self):
+        bots = await dbManger.execute(RobotsModel.select().where(RobotsModel.mode == self.mode))
+        for bot in bots:
+            from utils.context import PathContext
+            path_context = PathContext({"bot_id": bot.bot_id, "version": bot.version})
+            self.bots[bot.bot_id] = await Bot(path_context).load_agent()
+            _logger.info(f"load bot from model bot_id :{bot.bot_id}")
+        return self
+
+    async def get_response(self, bot_id, user_id, question):
+
+        if bot_id in self.bots:
+            bot = self.bots[bot_id] # type:Bot
+            intent, response = await bot.handle_text(user_id, question)
+            return bot_id, intent, response
+        else:
+            resp = f"{bot_id} not published"
+            _logger.warn(resp)
+            return bot_id, None, resp
+
+    async def interpreter(self, bot_id, question):
+        if bot_id in self.bots:
+            bot = self.bots[bot_id] # type:Bot
+            res = await bot.parse(text=question)
+            return res
+        else:
+            return "model not published"
+
+    async def publish(self, bot_id):
+        bot = self.bots[bot_id] # type:Bot
+        await bot.reload()
+
+    async def remove(self, bot_id, version):
+        if bot_id in self.bots:
+            bot = self.bots[bot_id]
+            if bot.version == version:
+                self.bots.pop(bot_id)
+
+
+class Bot(object):
 
     def __init__(self,
                  path_context: PathContext,
@@ -73,8 +120,24 @@ class BotManager(object):
             action_endpoint=self.action_endpoint,
 
         )
-        _logger.info(f"reload robot {self.path_context.bot_id}")
+        _logger.info(f"load agent {self.path_context.bot_id}")
         return self
+
+    async def reload(self, model_path: Optional[Text] = None):
+        """
+        加载agent ,重载agent
+        :param model_path:
+        :return:
+        """
+        model_path = self.path_context.chatbot_model_path if not model_path else model_path
+        self.agent = await load_agent(
+            model_path=model_path,
+            generator=self.generator,
+            tracker_store=self.tracker_store,
+            lock_store=self.lock_store,
+            action_endpoint=self.action_endpoint,
+        )
+        _logger.info(f"reload robot {self.path_context.bot_id}")
 
     async def parse(self, text: Optional[Text] = ""):
         """消息解析"""

@@ -9,7 +9,7 @@ services:
       - ${CHATBOT_HOST_PATH}:/chatbot
     ports:
       - "${PRODUCT_PORT}:8000"
-    command: python /code/main.py --port=8000 --workers=${PRODUCT_WORKERS}
+    command: python /code/main.py --port=8000 --workers=${PRODUCT_WORKERS} --mode=product
     restart: always
     environment:
       - TZ=Asia/Shanghai
@@ -23,7 +23,7 @@ services:
       - ${CHATBOT_HOST_PATH}:/chatbot
     ports:
       - "${TEST_PORT}:8000"
-    command: python /code/main.py --port=8000 --workers=${TEST_WORKERS}
+    command: python /code/main.py --port=8000 --workers=${TEST_WORKERS} --mode=test
     restart: always
     environment:
       - TZ=Asia/Shanghai
