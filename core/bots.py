@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
 =================================================
-@Project -> File   ：chatbot-management_v2 -> bots
+@Project -> File   ：chatbot-management_v2 -> ai
 @IDE    ：PyCharm
 @Author ：Mr. Wireless
 @Date   ：2020/7/14 17:38
@@ -23,7 +23,7 @@ from rasa.model import get_model_subdirectories
 
 # from models import dbManger
 from models import dbManger
-from models.model import RobotsModel
+from models.model import RobotModel
 from sanic.log import logger as _logger
 
 from utils.context import PathContext
@@ -37,7 +37,7 @@ class BotsManager(object):
         self.bots = {}
 
     async def load_bots(self):
-        bots = await dbManger.execute(RobotsModel.select().where(RobotsModel.mode == self.mode))
+        bots = await dbManger.execute(RobotModel.select().where(RobotModel.mode == self.mode))
         for bot in bots:
             from utils.context import PathContext
             path_context = PathContext({"bot_id": bot.bot_id, "version": bot.version})

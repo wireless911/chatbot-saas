@@ -15,12 +15,22 @@ TRAIN_DATA_PATH = "/chatbot/"
 MODEL_PATH = "models/"
 
 # REDIS SUB RELOAD CHANNEL
+PUB_ACTION = "reload_{mode}_bots"
 SUB_ACTION = f"reload_{mode}_bots"
 
 # REDIS
 REDIS_URL = "redis://localhost"
 REDIS_PASSWORD = 123456
 SUB_ACTION_REDIS_PASS = dict(db=15, password=REDIS_PASSWORD)
+CACHE_REDIS_PASS = dict(db=14, password=REDIS_PASSWORD)
+
+# SANIC_JWT
+# ACCESS_TOKEN_EXPIRE_TIME
+EXPIRE_TIME = 60 * 30
+# SCOPES
+SCOPES_USER = ["user", "test", "admin"]
+SCOPES_TEST = ["test", "admin"]
+SCOPES_ADMIN = ["admin"]
 
 # MYSQL
 MYSQL_URL = "localhost"

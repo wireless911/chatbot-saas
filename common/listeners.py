@@ -17,7 +17,7 @@ from rasa.core.agent import load_agent, Agent
 from sanic import Sanic
 from typing import Optional, List
 from sanic.log import logger as _logger
-from config.settings import SUB_ACTION, SUB_ACTION_REDIS_PASS, REDIS_URL
+from config.settings import SUB_ACTION, SUB_ACTION_REDIS_PASS, REDIS_URL,CACHE_REDIS_PASS
 from core.bots import BotsManager
 import asyncio
 
@@ -25,6 +25,11 @@ import asyncio
 async def before_server_start(app: Sanic, loop):
     app.botsManager = await BotsManager(app.mode).load_bots()
     app.pub = await aioredis.create_redis(REDIS_URL, **SUB_ACTION_REDIS_PASS)
+
+    # cache
+    app.redis = await aioredis.create_redis_pool(REDIS_URL,**CACHE_REDIS_PASS)
+
+
 
 
 async def after_server_start(app: Sanic, loop):

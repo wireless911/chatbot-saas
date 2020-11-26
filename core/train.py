@@ -208,6 +208,12 @@ async def _train_async_internal(
         "Nothing changed. You can use the old model stored at '{}'."
         "".format(os.path.abspath(old_model))
     )
+
+    _logger.info(
+        "Nothing changed. You can use the old model stored at '{}'."
+        "".format(os.path.abspath(old_model))
+    )
+
     return old_model
 
 
