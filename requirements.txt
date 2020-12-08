@@ -131,6 +131,7 @@ s3transfer==0.3.3
 sanic==19.12.2
 Sanic-Cors==0.10.0.post3
 sanic-jwt==1.4.1
+sanic-openapi==0.6.2
 Sanic-Plugins-Framework==0.9.2
 scikit-learn==0.22.2.post1
 scipy==1.4.1
@@ -163,4 +164,3 @@ Werkzeug==1.0.1
 wrapt==1.12.1
 yarl==1.4.2
 zipp==3.1.0
-sanic-openapi==0.6.2

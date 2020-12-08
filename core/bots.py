@@ -19,11 +19,8 @@ from rasa.core.channels import UserMessage
 from rasa.core.lock_store import LockStore
 from rasa.core.tracker_store import TrackerStore
 from rasa.core.utils import AvailableEndpoints
-from rasa.model import get_model_subdirectories
-
-# from models import dbManger
 from models import dbManger
-from models.model import RobotModel
+from models.model import RobotModel, RasaModel
 from sanic.log import logger as _logger
 
 from utils.context import PathContext
@@ -37,7 +34,7 @@ class BotsManager(object):
         self.bots = {}
 
     async def load_bots(self):
-        bots = await dbManger.execute(RobotModel.select().where(RobotModel.mode == self.mode))
+        bots = await dbManger.execute(RasaModel.select().where(RasaModel.mode == self.mode))
         for bot in bots:
             from utils.context import PathContext
             path_context = PathContext({"bot_id": bot.bot_id, "version": bot.version})
