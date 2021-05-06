@@ -32,7 +32,7 @@ docutils==0.15.2
 fbmessenger==6.0.0
 flasgger==0.6.6
 Flask==0.12.2
-Flask-Cors==3.0.3
+Flask-Cors==3.0.9
 future==0.18.2
 fuzzywuzzy==0.16.0
 gast==0.2.2
